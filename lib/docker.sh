@@ -266,6 +266,7 @@ run_claudebox_container() {
         -e "CLAUDEBOX_PROJECT_NAME=$project_name"
         -e "CLAUDEBOX_SLOT_NAME=$slot_name"
         -e "TERM=${TERM:-xterm-256color}"
+        -e "COLORTERM=${COLORTERM:-truecolor}"
         -e "VERBOSE=${VERBOSE:-false}"
         -e "CLAUDEBOX_WRAP_TMUX=${CLAUDEBOX_WRAP_TMUX:-false}"
         -e "CLAUDEBOX_PANE_NAME=${CLAUDEBOX_PANE_NAME:-}"

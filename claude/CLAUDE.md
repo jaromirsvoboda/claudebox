@@ -461,3 +461,41 @@ For projects with both README.md and CLAUDE.md files:
 5. **Common mistake**: Assuming numbered prefixes or specific naming patterns without verification
 
 This prevents documentation that references non-existent files, which creates confusion and reduces trust in the documentation.
+
+## Python Code Formatting Standards
+
+### Function Definition Formatting
+
+**REQUIRED format for multi-parameter function definitions:**
+
+```python
+def function_name(
+    self,
+    parameter_one: type_hint,
+    parameter_two: type_hint,
+    parameter_three: type_hint
+) -> return_type:
+```
+
+**Key formatting rules:**
+- Opening parenthesis on same line as function name
+- Each parameter on its own line with 4-space indentation
+- Closing parenthesis and return type annotation on separate line
+- Colon immediately after closing parenthesis
+
+**Example:**
+```python
+def __global_to_local_3d(
+    self,
+    global_vector: tuple[float, float, float],
+    axial_direction: tuple[float, float, float],
+    plane_normal: tuple[float, float, float]
+) -> tuple[float, float, float]:
+```
+
+**❌ AVOID this formatting pattern:**
+```python
+def __global_to_local_3d(self, global_vector: tuple[float, float, float],
+                       axial_direction: tuple[float, float, float],
+                       plane_normal: tuple[float, float, float]) -> tuple[float, float, float]:
+```

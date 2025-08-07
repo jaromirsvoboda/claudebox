@@ -1,0 +1,25 @@
+{
+  "custom_commands": {
+    "test": {
+      "description": "Test ClaudeBox custom command",
+      "command": "node ~/.claude-custom/commands/test-command.js"
+    },
+    "project-info": {
+      "description": "Display project information",
+      "command": "node ~/.claude-custom/commands/project-info.js"
+    },
+    "git-status": {
+      "description": "Enhanced git status",
+      "command": "bash ~/.claude-custom/hooks/git-helper.sh"
+    }
+  },
+  "aliases": {
+    "cb": "custom_commands",
+    "info": "project-info",
+    "gs": "git-status"
+  },
+  "environment": {
+    "CLAUDEBOX_CUSTOM": "enabled",
+    "CLAUDEBOX_VERSION": "custom-build"
+  }
+}

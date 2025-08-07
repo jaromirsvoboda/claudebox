@@ -160,6 +160,27 @@ USER root
 ARG REBUILD_TIMESTAMP
 RUN echo "Rebuild timestamp: ${REBUILD_TIMESTAMP:-none}" > /dev/null
 
+# Custom ClaudeBox Commands Integration
+COPY custom-claude /opt/claudebox-custom
+RUN chmod -R 755 /opt/claudebox-custom && \
+    chmod +x /opt/claudebox-custom/commands/* && \
+    chmod +x /opt/claudebox-custom/hooks/* && \
+    chmod +x /opt/claudebox-custom/scripts/*
+
+# Switch back to claude user for custom setup
+USER $USERNAME
+
+# Set up custom commands in user environment
+RUN mkdir -p ~/.claude-custom && \
+    echo 'source /opt/claudebox-custom/scripts/init-claude-custom.sh' >> ~/.zshrc && \
+    echo 'source /opt/claudebox-custom/scripts/init-claude-custom.sh' >> ~/.bashrc
+
+# Copy configuration
+COPY custom-claude/claude-config.json /home/$USERNAME/.claude-custom/config.json
+
+# Switch back to root for entrypoint setup
+USER root
+
 COPY --chown=$USERNAME docker-entrypoint.sh /usr/local/bin/docker-entrypoint
 RUN sed -i "s|DOCKERUSER|$USERNAME|g" /usr/local/bin/docker-entrypoint && \
     sed -i "s|DOCKERUSER|$USERNAME|g" /home/$USERNAME/init-firewall && \

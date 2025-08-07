@@ -1,4 +1,5 @@
 {
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "permissions": {
     "allow": [
       "Bash(tmux list-panes:*)",
@@ -6,7 +7,24 @@
       "Bash(ls:*)",
       "Bash(cat:*)",
       "Bash(grep:*)",
-      "Bash(claudebox:*)"
+      "Bash(claudebox:*)",
+      "Bash(echo $PATH)",
+      "Bash(rm:*)",
+      "Bash(uv venv:*)",
+      "Bash(source:*)",
+      "Bash(uv pip install:*)",
+      "Bash(if [ -f \"/home/claude/.claudebox/.venv/bin/python3\" ])",
+      "Bash([ ! -f \"/home/claude/.claudebox/.venv/bin/python\" ])",
+      "Bash(then ln -s \"/home/claude/.claudebox/.venv/bin/python3\" \"/home/claude/.claudebox/.venv/bin/python\")",
+      "Bash(fi)",
+      "Bash(mkdir:*)",
+      "Bash(chmod:*)",
+      "Bash(find:*)",
+      "Bash(tree:*)",
+      "Bash(cbgit)",
+      "Bash(cbtest)",
+      "Bash(cbinfo)",
+      "Bash(env)"
     ]
   },
   "enableAllProjectMcpServers": true,

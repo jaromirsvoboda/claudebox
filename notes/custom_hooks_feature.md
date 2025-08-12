@@ -11,7 +11,7 @@ Custom commands and hooks system has been successfully implemented for ClaudeBox
 The implementation follows the Docker image embedding approach rather than the `common.sh` mechanism, providing:
 
 1. **Built-in custom commands**: Commands are baked into every Docker container
-2. **Automatic initialization**: Custom commands load automatically on container startup  
+2. **Automatic initialization**: Custom commands load automatically on container startup
 3. **No manual setup**: Works out-of-the-box in all projects after rebuild
 4. **True persistence**: Commands survive all container recreation
 
@@ -34,7 +34,7 @@ custom-claude/
 
 **Inside any ClaudeBox container:**
 - `cbtest` - Test custom command system (shows environment info)
-- `cbinfo` - Display project information (files, git status, package.json data)  
+- `cbinfo` - Display project information (files, git status, package.json data)
 - `cbgit` - Enhanced git status with branch, commits, and status
 
 ### Docker Integration
@@ -69,7 +69,7 @@ bash .builder/build.sh
 # Remove existing installation to force fresh build
 rm -rf ~/.claudebox
 
-# Reinstall with custom changes  
+# Reinstall with custom changes
 ./claudebox.run
 
 # Navigate to project - will build fresh images with custom commands
@@ -79,7 +79,7 @@ claudebox
 
 3. **Or rebuild existing projects:**
 ```bash
-cd /existing/project  
+cd /existing/project
 claudebox rebuild
 claudebox
 ```
@@ -103,7 +103,7 @@ cbinfo    # Should show project information JSON
 cbgit     # Should show git status and recent commits
 ```
 
-### 3. Verify Initialization  
+### 3. Verify Initialization
 ```bash
 # Check if initialization ran
 echo $CLAUDEBOX_CUSTOM    # Should output: "enabled"
@@ -120,7 +120,7 @@ Container startup should show:
 ✅ Custom commands initialized!
 Available commands:
   - cbtest  : Test custom command
-  - cbinfo  : Show project information  
+  - cbinfo  : Show project information
   - cbgit   : Git helper utilities
 ```
 
@@ -129,7 +129,7 @@ Available commands:
 ### Commands Not Found (COMMON ISSUE)
 - **Problem**: `cbtest` command doesn't exist inside container
 - **Root Cause**: Docker used cached layers during rebuild, so custom commands weren't included
-- **Symptoms**: 
+- **Symptoms**:
   - `cbtest` returns "command not found"
   - `~/.claude-custom/` directory doesn't exist in container
   - No custom command aliases are set
@@ -166,7 +166,7 @@ claudebox rebuild
 # => [6/6] RUN chmod +x /opt/claudebox-custom/scripts/*.sh
 ```
 
-### Quick Installation Check  
+### Quick Installation Check
 - **Problem**: `claudebox.run` finished too quickly
 - **Cause**: Detected existing installation, only updated binary
 - **Solution**: Remove `~/.claudebox` and reinstall, or use `claudebox rebuild`
@@ -175,7 +175,7 @@ claudebox rebuild
 ```bash
 # Inside container - these should all exist if properly built:
 ls -la ~/.claude-custom/  # Should exist with commands/ directory
-echo $CLAUDEBOX_CUSTOM    # Should output: "enabled" 
+echo $CLAUDEBOX_CUSTOM    # Should output: "enabled"
 alias | grep cb           # Should show cbtest, cbinfo, cbgit aliases
 echo $PATH | grep claude-custom  # Should include custom commands path
 ```
@@ -183,7 +183,7 @@ echo $PATH | grep claude-custom  # Should include custom commands path
 ### Verify Packaging
 ```bash
 # Check if custom commands were packaged
-mkdir temp_check && cd temp_check  
+mkdir temp_check && cd temp_check
 tail -n +XX ../claudebox.run | tar -xz  # Find correct line number
 ls -la  # Should see 'custom-claude' directory
 ```
@@ -200,7 +200,7 @@ ls -la  # Should see 'custom-claude' directory
 ## Architecture Benefits
 
 1. **Zero configuration** - Works immediately in all projects
-2. **True portability** - Commands built into immutable Docker images  
+2. **True portability** - Commands built into immutable Docker images
 3. **Team consistency** - Same commands available for all team members
 4. **Persistent across updates** - Commands survive container recreation
 5. **Extensible** - Easy to add more commands by editing custom-claude directory
@@ -219,7 +219,7 @@ ls -la  # Should see 'custom-claude' directory
 **To Update Custom Commands:**
 1. Edit files in `custom-claude/` directory
 2. Run `bash .builder/build.sh` to rebuild installer
-3. Run `./claudebox.run` to update installation  
+3. Run `./claudebox.run` to update installation
 4. Use `claudebox rebuild` for existing projects
 5. New projects automatically get updated commands
 
@@ -307,9 +307,9 @@ Create standardized directory for git hooks:
 .claudebox/
 ├── common.sh           # Main hooks file (already supported)
 ├── git-hooks/          # Git hooks directory (new)
-│   ├── pre-commit     
-│   ├── post-merge     
-│   └── pre-push       
+│   ├── pre-commit
+│   ├── post-merge
+│   └── pre-push
 └── commands/           # Custom commands (already supported)
 ```
 
@@ -372,7 +372,7 @@ claudebox init-hooks    # Same template available everywhere
 - Add `claudebox init-hooks` command
 - Update binary packaging to include template
 
-**Phase 2: Git Hooks Integration** 
+**Phase 2: Git Hooks Integration**
 - Add git hooks directory support to template
 - Enhance template with git hooks installation logic
 

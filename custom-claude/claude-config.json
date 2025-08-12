@@ -11,12 +11,19 @@
     "git-status": {
       "description": "Enhanced git status",
       "command": "bash ~/.claude-custom/hooks/git-helper.sh"
+    },
+    "feature-sync": {
+      "description": "Append concise progress/context to a feature notes markdown file",
+      "command": "node ~/.claude-custom/commands/feature-sync.js"
     }
   },
   "aliases": {
     "cb": "custom_commands",
     "info": "project-info",
-    "gs": "git-status"
+    "gs": "git-status",
+    "feat": "feature-sync",
+    "fs": "feature-sync",
+    "cbfeat": "feature-sync"
   },
   "environment": {
     "CLAUDEBOX_CUSTOM": "enabled",

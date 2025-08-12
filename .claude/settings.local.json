@@ -24,7 +24,8 @@
       "Bash(cbgit)",
       "Bash(cbtest)",
       "Bash(cbinfo)",
-      "Bash(env)"
+      "Bash(env)",
+      "WebFetch(domain:docs.anthropic.com)"
     ]
   },
   "enableAllProjectMcpServers": true,

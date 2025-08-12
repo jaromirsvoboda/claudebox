@@ -4,12 +4,19 @@ A practical step-by-step guide for adding custom commands that actually work, ac
 
 ## 🚀 Quick Start (TL;DR)
 
-**For Commands:**
+**For Shell Commands:**
 1. Create file in `custom-claude/commands/` (chmod +x optional - done automatically)
 2. Add alias in `custom-claude/scripts/init-claude-custom.sh` (line 23-26 area)
 3. `bash .builder/build.sh` 
 4. `rm -rf ~/.claudebox && ./claudebox.run`
 5. Test: `cd /project && claudebox && your-command`
+
+**For Claude Slash Commands (AI prompts):**
+1. Create `.md` file in `custom-claude/commands/` with your prompt content
+2. Use `$ARGUMENTS` placeholder if you want to accept parameters
+3. `bash .builder/build.sh`
+4. `rm -rf ~/.claudebox && ./claudebox.run` 
+5. Test: In Claude Code chat, use `/your-command` or `/your-command argument`
 
 **For Hooks:**
 1. Create file in `custom-claude/hooks/` (chmod +x optional - done automatically)
@@ -32,7 +39,7 @@ ClaudeBox custom commands are built into Docker images during the build process.
 
 ### 1. Create Your Custom Commands OR Hooks
 
-#### Adding Custom Commands
+#### Adding Shell Commands (executable scripts)
 
 Navigate to the `custom-claude/commands/` directory and create your command file:
 
@@ -67,6 +74,82 @@ git status --porcelain || echo "Not a git repository"
 EOF
 
 chmod +x custom-claude/commands/my-script.sh
+```
+
+#### Adding Claude Slash Commands (AI prompts)
+
+Claude Code supports custom slash commands that send predefined prompts to the AI. These are `.md` files containing your prompt:
+
+```bash
+cd /path/to/claudebox/repo
+ls custom-claude/commands/  # Should see existing files including .md files
+```
+
+**Create a custom slash command:**
+```bash
+# Example: Create /optimize command for code optimization
+cat > custom-claude/commands/optimize.md << 'EOF'
+Please analyze the following code for performance issues and optimization opportunities:
+
+$ARGUMENTS
+
+Focus on:
+1. Algorithm efficiency and time complexity
+2. Memory usage and potential leaks  
+3. Database query optimization
+4. Caching opportunities
+5. Code structure and maintainability
+
+Provide specific, actionable recommendations with code examples.
+EOF
+```
+
+**Create a context transfer command (like our feature-sync):**
+```bash
+cat > custom-claude/commands/feature-sync.md << 'EOF'
+I need you to intelligently update a feature documentation file to capture current context for future Claude instances.
+
+**Target file**: If I provide an argument ($ARGUMENTS), use that filename. Otherwise, infer the most relevant feature file from notes/*.md by prioritizing files containing "feature", "roadmap", "task", or "plan" in the name, then ask for confirmation.
+
+**Your task**: Read the current feature file and append a new section that captures:
+
+1. **Current Status**: What's working, what's broken, what's partially implemented
+2. **Key Insights**: Important discoveries, gotchas, patterns, or decisions made during recent work  
+3. **Technical Context**: 
+   - Architecture decisions and why they were made
+   - Code patterns established or changed
+   - Dependencies, integrations, or constraints discovered
+   - Performance, security, or compatibility considerations
+4. **Implementation State**:
+   - What files were modified and why
+   - What approaches were tried and abandoned (with reasons)
+   - Current test coverage and gaps
+   - Known issues or technical debt introduced
+5. **Handoff Information**:
+   - What a future Claude needs to know to continue this work
+   - Critical context that would be hard to rediscover
+   - Recommended next steps with reasoning
+
+**Style**: Write concisely but completely. Focus on information that would save a future Claude hours of investigation. Avoid redundant timestamps or git metadata - focus on the conceptual and technical understanding needed.
+
+Make the update feel like a natural extension of the existing document, not a rigid template.
+EOF
+```
+
+**Create a debugging assistant command:**
+```bash
+cat > custom-claude/commands/debug.md << 'EOF'
+Help me debug this issue: $ARGUMENTS
+
+Please:
+1. Analyze the error/problem systematically
+2. Check common causes and solutions for this type of issue
+3. Suggest debugging steps in order of likelihood
+4. Provide code examples or commands to help investigate
+5. If relevant, check configuration files, dependencies, and environment setup
+
+Start with the most likely causes and work towards more obscure possibilities.
+EOF
 ```
 
 #### Adding Custom Hooks
@@ -211,9 +294,9 @@ EOF
 chmod +x custom-claude/hooks/project-setup.sh
 ```
 
-### 2. Add Commands/Hooks to Initialization Script
+### 2. Configure Commands/Hooks Integration 
 
-**For Custom Commands - Add Aliases:**
+**For Shell Commands - Add Aliases:**
 ```bash
 # Edit the init script
 vim custom-claude/scripts/init-claude-custom.sh
@@ -224,6 +307,22 @@ alias cbinfo='node ~/.claude-custom/commands/project-info.js'
 alias cbgit='bash ~/.claude-custom/hooks/git-helper.sh'
 alias cbmy='node ~/.claude-custom/commands/my-command.js'        # <-- ADD THIS
 alias cbscript='bash ~/.claude-custom/commands/my-script.sh'     # <-- OR THIS
+```
+
+**For Claude Slash Commands - No Configuration Needed:**
+
+Claude slash commands (`.md` files) work automatically once they're in the `custom-claude/commands/` directory. Claude Code will discover them and make them available as `/command-name`.
+
+Examples:
+- `custom-claude/commands/optimize.md` → `/optimize` command
+- `custom-claude/commands/feature-sync.md` → `/feature-sync` command  
+- `custom-claude/commands/debug.md` → `/debug` command
+
+You can use them in Claude Code chat like:
+```
+/optimize this function needs performance improvements
+/feature-sync custom_hooks_feature
+/debug my tests are failing with connection timeout
 ```
 
 **For Custom Hooks - Add Hook Execution:**
@@ -297,11 +396,22 @@ Navigate to any project directory and start ClaudeBox:
 cd /some/project/directory
 claudebox
 
-# Inside the container, test your new commands:
+# Inside the container, test your shell commands:
 cbmy        # Should run your JavaScript command
 cbscript    # Should run your bash script
 cbtest      # Should still work (existing command)
 ```
+
+**Test Claude Slash Commands:**
+
+In Claude Code chat interface (not the shell), test your slash commands:
+```
+/optimize
+/feature-sync  
+/debug connection timeout error
+```
+
+Each should trigger the AI with your custom prompt.
 
 ### 6. Verify Installation Success
 
@@ -314,7 +424,7 @@ ls -la ~/.claude-custom/
 
 # Check if your command files are there
 ls -la ~/.claude-custom/commands/
-# Should show: test-command.js, project-info.js, my-command.js, my-script.sh
+# Should show: test-command.js, project-info.js, my-command.js, my-script.sh, optimize.md, feature-sync.md, debug.md
 
 # Check if aliases are set
 alias | grep cb
@@ -492,7 +602,7 @@ chmod +x custom-claude/hooks/your-hook.sh
 
 ## Quick Reference Checklist
 
-### When adding a new custom command:
+### When adding a new shell command:
 - [ ] Create command file in `custom-claude/commands/`
 - [ ] Make file executable with `chmod +x`
 - [ ] Add alias in `custom-claude/scripts/init-claude-custom.sh`
@@ -501,6 +611,15 @@ chmod +x custom-claude/hooks/your-hook.sh
 - [ ] Run `./claudebox.run` to install updated version
 - [ ] Test in container: `cd /project && claudebox && your-command`
 - [ ] Verify with diagnostic commands if it doesn't work
+
+### When adding a new Claude slash command:
+- [ ] Create `.md` file in `custom-claude/commands/` with your prompt
+- [ ] Use `$ARGUMENTS` placeholder for parameters if needed
+- [ ] Run `bash .builder/build.sh` to build installer
+- [ ] Run `rm -rf ~/.claudebox` to force clean install
+- [ ] Run `./claudebox.run` to install updated version
+- [ ] Test in Claude Code chat: `/your-command` or `/your-command arguments`
+- [ ] Verify the command appears in Claude Code's slash command list
 
 ### When adding a new custom hook:
 - [ ] Create hook file in `custom-claude/hooks/`

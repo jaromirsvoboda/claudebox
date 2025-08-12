@@ -5,45 +5,61 @@
 
 set -euo pipefail
 
-# Get version from main.sh
-VERSION=$(grep -m1 'readonly CLAUDEBOX_VERSION=' main.sh | cut -d'"' -f2)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
+MAIN_SH="${REPO_ROOT}/main.sh"
+if [[ ! -f "$MAIN_SH" ]]; then
+  echo "❌ main.sh not found (expected at $MAIN_SH). Run from a ClaudeBox repo clone." >&2
+  exit 1
+fi
+
+# Normalize line endings (CRLF -> LF) before packaging
+echo "🔍 Normalizing line endings (CRLF -> LF) for shell scripts..."
+find "$REPO_ROOT" \( -name '*.sh' -o -name 'Dockerfile' -o -name 'Dockerfile.*' \) -type f -print0 | xargs -0 sed -i 's/\r$//'
+echo "✅ Line ending normalization complete"
+
+# Extract version safely
+VERSION=$(grep -m1 'readonly CLAUDEBOX_VERSION=' "$MAIN_SH" | cut -d'"' -f2)
 if [[ -z "$VERSION" ]]; then
   echo "❌ Could not extract version from main.sh" >&2
   exit 1
 fi
 
-echo "🔨 Building ClaudeBox v$VERSION"
+echo "🔨 Building ClaudeBox v$VERSION (repo: $REPO_ROOT)"
 
-# Clean dist directory
+DIST_DIR="${REPO_ROOT}/dist"
 echo "🧹 Cleaning dist directory..."
-rm -rf dist
-mkdir -p dist
+rm -rf "$DIST_DIR"
+mkdir -p "$DIST_DIR"
 
-TEMPLATE=".builder/script_template_root.sh"
-OUTPUT="dist/claudebox.run"
-ARCHIVE="dist/claudebox-${VERSION}.tar.gz"
+TEMPLATE="${REPO_ROOT}/.builder/script_template_root.sh"
+OUTPUT="${DIST_DIR}/claudebox.run"
+ARCHIVE="${DIST_DIR}/claudebox-${VERSION}.tar.gz"
 
 # Create archive in temp location to avoid "file changed as we read it" error
 TEMP_ARCHIVE="/tmp/claudebox_archive_$$.tar.gz"
 
-# Create archive of entire repo (excluding hidden files and build output)
 echo "📦 Creating archive..."
-tar -czf "$TEMP_ARCHIVE" \
-  --exclude='.git' \
-  --exclude='.gitignore' \
-  --exclude='.github' \
-  --exclude='.builder' \
-  --exclude='.claude' \
-  --exclude='.vscode' \
-  --exclude='.idea' \
-  --exclude='.mcp.json' \
-  --exclude='dist' \
-  --exclude='claudebox.run' \
-  --exclude='*.swp' \
-  --exclude='*~' \
-  --exclude='archive.tar.gz' \
-  --exclude='*.tar.gz' \
-  .
+(
+  cd "$REPO_ROOT"
+  tar -czf "$TEMP_ARCHIVE" \
+    --exclude='.git' \
+    --exclude='.gitignore' \
+    --exclude='.github' \
+    --exclude='.builder' \
+    --exclude='.claude' \
+    --exclude='.vscode' \
+    --exclude='.idea' \
+    --exclude='.mcp.json' \
+    --exclude='dist' \
+    --exclude='claudebox.run' \
+    --exclude='*.swp' \
+    --exclude='*~' \
+    --exclude='archive.tar.gz' \
+    --exclude='*.tar.gz' \
+    .
+)
 
 # Move to final location
 mv "$TEMP_ARCHIVE" "$ARCHIVE"
@@ -72,4 +88,4 @@ echo "   📄 Archive: $ARCHIVE ($(ls -lh "$ARCHIVE" | awk '{print $5}'))"
 echo "   🔐 SHA256: $SHA256"
 
 # Create a symlink from the root for backward compatibility
-ln -sf "$OUTPUT" claudebox.run
+ln -sf "$OUTPUT" "${REPO_ROOT}/claudebox.run"

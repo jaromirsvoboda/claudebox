@@ -1,6 +1,7 @@
 #!/bin/bash
 # Build the ClaudeBox self-extracting installer script
 # Packages entire repo for extraction to ~/.claudebox/
+# If you encounter $'\r': command not found, convert line endings: sed -i 's/\r$//' .builder/build.sh
 
 set -euo pipefail
 

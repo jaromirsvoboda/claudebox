@@ -72,8 +72,10 @@ init_project_dir() {
     mkdir -p "$parent"
     # initialize counter if missing
     [[ -f "$parent/.project_container_counter" ]] || printf '1' > "$parent/.project_container_counter"
-    # ensure central profiles.ini
-    [[ -f "$parent/profiles.ini" ]] || touch "$parent/profiles.ini"
+    # ensure central profiles.ini with python profile by default
+    if [[ ! -f "$parent/profiles.ini" ]]; then
+        echo "python" > "$parent/profiles.ini"
+    fi
     # store project path
     echo "$path" > "$parent/.project_path"
     # set up commands symlink in parent (once per project)

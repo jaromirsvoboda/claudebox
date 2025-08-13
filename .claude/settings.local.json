@@ -25,7 +25,12 @@
       "Bash(cbtest)",
       "Bash(cbinfo)",
       "Bash(env)",
-      "WebFetch(domain:docs.anthropic.com)"
+      "WebFetch(domain:docs.anthropic.com)",
+      "WebFetch(domain:docs.astral.sh)",
+      "Bash(uv:*)",
+      "Bash(python3.12:*)",
+      "Bash(python test:*)",
+      "Bash(echo $VIRTUAL_ENV)"
     ]
   },
   "enableAllProjectMcpServers": true,

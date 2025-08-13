@@ -938,4 +938,186 @@ _install_tmux_conf() {
     fi
 }
 
-export -f _cmd_save _cmd_unlink _cmd_rebuild _cmd_tmux _cmd_project _cmd_special _cmd_import _install_tmux_conf _cmd_kill
+# Feature sync command - appends progress context to feature notes files
+_cmd_feature_sync() {
+    local target_arg="${1:-}"
+    
+    # Find repository root by looking for .git directory
+    local repo_root="$PWD"
+    while [[ "$repo_root" != "/" ]]; do
+        if [[ -d "$repo_root/.git" ]]; then
+            break
+        fi
+        repo_root="$(dirname "$repo_root")"
+    done
+    
+    if [[ "$repo_root" == "/" ]]; then
+        repo_root="$PWD"  # Fallback if no git repo found
+    fi
+    
+    local notes_dir="$repo_root/notes"
+    if [[ ! -d "$notes_dir" ]]; then
+        error "notes directory not found: $notes_dir"
+    fi
+    
+    local target_file=""
+    
+    if [[ -n "$target_arg" ]]; then
+        # Specific file provided
+        local filename="$target_arg"
+        [[ "$filename" == *.md ]] || filename="${filename}.md"
+        
+        if [[ -f "$notes_dir/$filename" ]]; then
+            target_file="$notes_dir/$filename"
+        elif [[ -f "$target_arg" ]] && [[ -r "$target_arg" ]]; then
+            target_file="$target_arg"
+        else
+            error "Specified feature file not found: $filename"
+        fi
+    else
+        # Auto-detect feature file - use ls -t for portability
+        local candidates=()
+        if [[ -d "$notes_dir" ]]; then
+            # Use ls -t to sort by modification time (portable across macOS/Linux)
+            while IFS= read -r file; do
+                if [[ -f "$notes_dir/$file" ]]; then
+                    candidates+=("$notes_dir/$file")
+                fi
+            done < <(cd "$notes_dir" && ls -t *.md 2>/dev/null || true)
+        fi
+        
+        if [[ ${#candidates[@]} -eq 0 ]]; then
+            error "No markdown feature candidates in notes/"
+        fi
+        
+        # Look for priority files first
+        local priority_file=""
+        for file in "${candidates[@]}"; do
+            local basename=$(basename "$file")
+            if [[ "$basename" =~ (feature|roadmap|task|plan) ]]; then
+                priority_file="$file"
+                break
+            fi
+        done
+        
+        # Use priority file or most recent
+        local inferred_file="${priority_file:-${candidates[0]}}"
+        local basename=$(basename "$inferred_file")
+        
+        # Confirm with user (if stdin is a terminal)
+        if [[ -t 0 ]]; then
+            echo -n "Inferred feature file: $basename. Use this? (y/N): "
+            read -r confirm
+            case "$confirm" in
+                [Yy]|[Yy][Ee][Ss])
+                    target_file="$inferred_file"
+                    ;;
+                *)
+                    echo "Aborted. Provide a file name. Candidates:"
+                    local count=0
+                    for file in "${candidates[@]}"; do
+                        if [[ $count -ge 20 ]]; then break; fi
+                        echo " - $(basename "$file")"
+                        ((count++)) || true
+                    done
+                    exit 1
+                    ;;
+            esac
+        else
+            # Non-interactive - use inferred file
+            target_file="$inferred_file"
+        fi
+    fi
+    
+    # Read current content
+    local content
+    if ! content=$(cat "$target_file" 2>/dev/null); then
+        error "Failed to read file: $target_file"
+    fi
+    
+    # Generate timestamp
+    local timestamp=$(date -u '+%Y-%m-%d %H:%M:%S UTC')
+    
+    # Get git information
+    local branch=""
+    local latest_commit=""
+    local status_output=""
+    local change_summary="none"
+    
+    if command -v git >/dev/null 2>&1 && [[ -d "$repo_root/.git" ]]; then
+        branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
+        latest_commit=$(git log -1 --oneline 2>/dev/null || echo "")
+        status_output=$(git status --porcelain 2>/dev/null || echo "")
+        
+        # Parse git status for change summary
+        if [[ -n "$status_output" ]]; then
+            local added=$(echo "$status_output" | grep -c '^A\|^??' || echo "0")
+            local modified=$(echo "$status_output" | grep -c '^ M\|^M ' || echo "0")
+            local deleted=$(echo "$status_output" | grep -c '^ D\|^D ' || echo "0")
+            change_summary="+${added} ~${modified} -${deleted}"
+        fi
+    fi
+    
+    # Get current working directory relative to repo root
+    local pwd_rel="${PWD#$repo_root}"
+    [[ "$pwd_rel" == "$PWD" ]] && pwd_rel="$PWD" || pwd_rel=".$pwd_rel"
+    
+    # Extract open items from existing content (up to 5)
+    local open_items=""
+    local count=0
+    while IFS= read -r line; do
+        if [[ "$line" =~ ^-[[:space:]]\[[[:space:]]\][[:space:]] ]]; then
+            if [[ $count -lt 5 ]]; then
+                local item="${line#- [ ] }"
+                open_items+="- [ ] $item"$'\n'
+                ((count++)) || true
+            else
+                break
+            fi
+        fi
+    done <<< "$content"
+    
+    # If no open items found, add a placeholder
+    [[ -z "$open_items" ]] && open_items="- [ ] <add next task>"$'\n'
+    
+    # Generate update block
+    local update_block="
+
+## Progress $timestamp
+
+Context:
+- Branch: ${branch:-n/a}
+- Commit: ${latest_commit:-n/a}
+- Changes: $change_summary
+- PWD: $pwd_rel
+
+Plan (succinct):
+- Current Focus: <fill>
+- Next Step: <single actionable step>
+- Risks: <list or none>
+
+Open Items:
+${open_items%$'\n'}
+
+---
+"
+    
+    # Check for duplicate (simple check for similar timestamp)
+    local check_line="## Progress ${timestamp:0:16}"  # Check first 16 chars of timestamp
+    if [[ "$content" == *"$check_line"* ]]; then
+        info "Similar block detected; not adding duplicate."
+        exit 0
+    fi
+    
+    # Append to file
+    local final_content="${content%"${content##*[![:space:]]}"}"  # Trim trailing whitespace
+    final_content+="$update_block"
+    
+    if printf '%s' "$final_content" > "$target_file"; then
+        success "Updated feature file: $target_file"
+    else
+        error "Failed to write to file: $target_file"
+    fi
+}
+
+export -f _cmd_save _cmd_unlink _cmd_rebuild _cmd_tmux _cmd_project _cmd_special _cmd_import _install_tmux_conf _cmd_kill _cmd_feature_sync

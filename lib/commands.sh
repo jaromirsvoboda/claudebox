@@ -122,7 +122,8 @@ show_help() {
   slots                           List all container slots
   slot <number>                   Launch a specific container slot
   project <name>                  Open project by name/hash from anywhere
-  tmux                            Launch ClaudeBox with tmux support enabled"
+  tmux                            Launch ClaudeBox with tmux support enabled
+  feature-sync [file]             Append progress context to feature notes"
     
     # Check if we're in a project directory
     local project_folder_name
@@ -297,6 +298,7 @@ dispatch_command() {
         project)          _cmd_project "$@" ;;
         import)           _cmd_import "$@" ;;
         kill)             _cmd_kill "$@" ;;
+        feature-sync)     _cmd_feature_sync "$@" ;;
         
         # Special commands that modify container
         config|mcp|migrate-installer) 

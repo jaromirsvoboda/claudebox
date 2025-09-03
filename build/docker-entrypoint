@@ -306,6 +306,8 @@ else
             
             # tooling.md generation is handled in root section above
             
+            # Note: .claude.json is directly mounted from slot directory, no copying needed
+            
             # Ensure uv is in PATH
             export PATH="$HOME/.local/bin:$PATH"
             
@@ -366,10 +368,7 @@ else
                 fi
             fi
             
-            # After claude exits, copy .claude.json if it was created
-            if [[ -f "$HOME/.claude.json" ]] && [[ ! -f "$HOME/.claudebox/${CLAUDEBOX_SLOT_NAME}/.claude.json" ]]; then
-                cp "$HOME/.claude.json" "$HOME/.claudebox/${CLAUDEBOX_SLOT_NAME}/.claude.json"
-            fi
+            # Note: .claude.json is directly mounted, so changes are automatically persisted
         ' -- "$@"
     fi
 fi

@@ -228,10 +228,12 @@ run_claudebox_container() {
     
     docker_args+=(-v "$PROJECT_SLOT_DIR/.claude":/home/$DOCKER_USER/.claude)
     
-    # Mount .claude.json only if it already exists (from previous session)
-    if [[ -f "$PROJECT_SLOT_DIR/.claude.json" ]]; then
-        docker_args+=(-v "$PROJECT_SLOT_DIR/.claude.json":/home/$DOCKER_USER/.claude.json)
+    # Always create and mount .claude.json to ensure authentication persistence
+    # Touch the file if it doesn't exist so Docker can mount it
+    if [[ ! -f "$PROJECT_SLOT_DIR/.claude.json" ]]; then
+        touch "$PROJECT_SLOT_DIR/.claude.json"
     fi
+    docker_args+=(-v "$PROJECT_SLOT_DIR/.claude.json":/home/$DOCKER_USER/.claude.json)
     
     # Mount .config directory
     docker_args+=(-v "$PROJECT_SLOT_DIR/.config":/home/$DOCKER_USER/.config)

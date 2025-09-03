@@ -30,7 +30,8 @@
       "Bash(uv:*)",
       "Bash(python3.12:*)",
       "Bash(python test:*)",
-      "Bash(echo $VIRTUAL_ENV)"
+      "Bash(echo $VIRTUAL_ENV)",
+      "Bash(./main.sh create:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
